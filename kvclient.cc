@@ -3,156 +3,163 @@
 // Key-value store client that makes requests to access key-value store over the
 // network
 //
-
+// Copyright (c) 2003-2021 Christopher M. Kohlhoff (chris at kohlhoff dot com)
+//
+// Distributed under the Boost Software License, Version 1.0. (See accompanying
+// file LICENSE_1_0.txt or copy at http://www.boost.org/LICENSE_1_0.txt)
+//
+#include <cstdlib>
+#include <deque>
 #include <iostream>
+#include <boost/bind/bind.hpp>
 #include <boost/asio.hpp>
+#include <boost/thread/thread.hpp>
+#include <boost/bind/bind.hpp>
+#include "message.hpp"
+
+using boost::asio::ip::tcp;
+
+typedef std::deque<chat_message> chat_message_queue;
 
 class kvclient {
 private:
-  // Store the server port number and address
-  int server_port;
-  std::string server_addr;
+  boost::asio::io_context& io_context_;
+  tcp::socket socket_;
+  chat_message read_msg_;
+  chat_message_queue write_msgs_;
+  void handle_connect(const boost::system::error_code& error) {
+    if (!error) {
+      boost::asio::async_read(
+          socket_,
+          boost::asio::buffer(
+              read_msg_.data(),
+              chat_message::header_length),
+          boost::bind(
+              &kvclient::handle_read_header,
+              this,
+              boost::asio::placeholders::error));
+    }
+  }
 
+  void handle_read_header(const boost::system::error_code& error) {
+    if (!error && read_msg_.decode_header()) {
+      boost::asio::async_read(socket_,
+          boost::asio::buffer(read_msg_.body(), read_msg_.body_length()),
+          boost::bind(
+              &kvclient::handle_read_body,
+              this,
+              boost::asio::placeholders::error));
+    }
+    else {
+      do_close();
+    }
+  }
+
+  void handle_read_body(const boost::system::error_code& error) {
+    if (!error) {
+      std::cout.write(read_msg_.body(), read_msg_.body_length());
+      std::cout << "\n";
+      boost::asio::async_read(socket_,
+          boost::asio::buffer(read_msg_.data(), chat_message::header_length),
+          boost::bind(&kvclient::handle_read_header, this,
+          boost::asio::placeholders::error));
+    }
+    else {
+      do_close();
+    }
+  }
+
+  void do_write(chat_message msg) {
+    bool write_in_progress = !write_msgs_.empty();
+    write_msgs_.push_back(msg);
+    if (!write_in_progress) {
+        boost::asio::async_write(socket_,
+            boost::asio::buffer(write_msgs_.front().data(),
+            write_msgs_.front().length()),
+            boost::bind(&kvclient::handle_write, this,
+            boost::asio::placeholders::error));
+    }
+  }
+
+  void handle_write(const boost::system::error_code& error) {
+    if (!error) {
+      write_msgs_.pop_front();
+      if (!write_msgs_.empty()) {
+        boost::asio::async_write(
+            socket_,
+            boost::asio::buffer(
+                write_msgs_.front().data(),
+                write_msgs_.front().length()),
+            boost::bind(
+                &kvclient::handle_write,
+                this,
+                boost::asio::placeholders::error));
+      }
+    }
+    else {
+      do_close();
+    }
+  }
+
+  void do_close() {
+    socket_.close();
+  }
 
 public:
-  kvclient(std::string hostname, int port) :
-      server_port(port), server_addr(hostname) {
-    // Create a socket and connect to the server
-    boost::asio::io_service io_service;
-    boost::asio::ip::tcp::socket socket(io_service);
-    boost::asio::ip::tcp::resolver resolver(io_service);
-    
-    try {
-      auto endpoints = resolver.resolve({server_addr, std::to_string(server_port)});
-      auto connected_to = boost::asio::connect(socket, endpoints);
-      std::cout << "Connected to " << connected_to << std::endl;
-    } catch (boost::system::system_error& se) {
-      std::cerr << "Error " << se.what() << std::endl;
-      exit(1);
-    }
-    // // Create hostname resolver
-    // boost::asio::io_service io_service;
-    // boost::asio::ip::tcp::resolver resolver(io_service);
-    // boost::system::error_code ec;
-    // for (auto&& result : resolver.resolve("www.google.com", "http", ec)) {
-    //   std::cout << result.service_name() << " " << result.host_name() << " "
-    //       << result.endpoint() << std::endl;
-    // }
-    // if (ec) {
-    //   std::cout << "Error code: " << ec << std::endl;
-    // } 
+  kvclient(
+        boost::asio::io_context& io_context,
+        const tcp::resolver::results_type& endpoints) :
+        io_context_(io_context), socket_(io_context) {
+    boost::asio::async_connect(
+        socket_,
+        endpoints,
+        boost::bind(
+            &kvclient::handle_connect,
+            this,
+            boost::asio::placeholders::error));
+  }
+
+  void write(const chat_message& msg) {
+    boost::asio::post(
+        io_context_, boost::bind(&kvclient::do_write, this, msg));
+  }
+
+  void close() {
+    boost::asio::post(io_context_, boost::bind(&kvclient::do_close, this));
   }
 };
 
-// class kvclient {
-//   // Store the server address and port number
-//   std::string server_address;
-//   int server_port;
-// public:
-//   kvclient(const std::string& server, int port) :
-//       server_address(server), server_port(port) {
-//     // Create a socket
-//     int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-//     if (sockfd < 0) {
-//       std::cerr << "Error opening socket\n";
-//       exit(1);
-//     }
-//     // Get the server address
-//     struct hostent* server = gethostbyname(server_address.c_str());
-//     if (server == NULL) {
-//       std::cerr << "Error, no such host\n";
-//       exit(1);
-//     }
-//     // Create the server address
-//     struct sockaddr_in server_addr;
-//     bzero((char*) &server_addr, sizeof(server_addr));
-//     server_addr.sin_family = AF_INET;
-//     bcopy((char*) server->h_addr, (char*) &server_addr.sin_addr.s_addr,
-//           server->h_length);
-//     server_addr.sin_port = htons(server_port);
-
-//     // Connect to the server
-//     if (connect(sockfd, (struct sockaddr*) &server_addr, sizeof(server_addr))
-//         < 0) {
-//       std::cerr << "Error connecting\n";
-//       exit(1);
-//     }
-
-//     // Send a message to the server
-//     std::string msg = "Hello from client";
-//     int n = write(sockfd, msg.c_str(), msg.length());
-//     if (n < 0) {
-//       std::cerr << "Error writing to socket\n";
-//       exit(1);
-//     }
-
-//     // Read a message from the server
-//     char buffer[256];
-//     bzero(buffer, 256);
-//     n = read(sockfd, buffer, 255);
-//     if (n < 0) {
-//       std::cerr << "Error reading from socket\n";
-//       exit(1);
-//     }
-//     std::cout << buffer << std::endl;
-
-//     // Close the socket
-//     close(sockfd);
-//   }
-
-//   // RequestType enum
-//   enum RequestType { GET, PUT, DEL };
-//   struct Request {
-//     RequestType type;
-//     std::string key;
-//     std::string value;    // Only used for PUT requests
-//   };
-
-//   struct Response {
-//     bool success;
-//     std::string value;    // Only used for GET requests
-//   };
-
-//   Response sendRequest(Request request) {
-//     // Create request string
-//     std::string request_string;
-//     switch (request.type) {
-//       case GET:
-//         request_string =
-//             "GET\nKEY-LEN: " + request.key.size() + "\n" + request.key + "\n";
-//         break;
-//       case PUT:
-//         request_string =
-//             "PUT\nKEY-LEN: " + request.key.size() + "\n" + request.key +
-//             "\nVAL-LEN: " + request.value.size() + "\n" + request.value + "\n";
-//         break;
-//       case DEL:
-//         request_string =
-//             "DEL\nKEY-LEN: " + request.key.size() + "\n" + request.key + "\n";
-//         break;
-//       default:
-//         std::cerr << "Invalid request type\n";
-//         exit(1);
-//     }
-
-//     // Send request string
-
-
-//     // Receive response string
-//   }
-
-
-// };
-
-
 int main(int argc, char* argv[]) {
-  if (argc != 3) {
-    std::cerr << "Usage: kvclient <host> <port>\n";
-    return 1;
-  }
+  try {
+    if (argc != 3) {
+      std::cerr << "Usage: kvclient <host> <port>\n";
+      return 1;
+    }
 
-  // Create a kvclient object
-  kvclient client(argv[1], atoi(argv[2]));
+    boost::asio::io_context io_context;
+    tcp::resolver resolver(io_context);
+    tcp::resolver::results_type endpoints = resolver.resolve(argv[1], argv[2]);
+
+    kvclient c(io_context, endpoints);
+
+    boost::thread t(boost::bind(&boost::asio::io_context::run, &io_context));
+
+    char line[chat_message::max_body_length + 1];
+    while (std::cin.getline(line, chat_message::max_body_length + 1)) {
+      using namespace std; // For strlen and memcpy.
+      chat_message msg;
+      msg.body_length(strlen(line));
+      memcpy(msg.body(), line, msg.body_length());
+      msg.encode_header();
+      c.write(msg);
+    }
+
+    c.close();
+    t.join();
+  }
+  catch (std::exception& e) {
+    std::cerr << "Exception: " << e.what() << "\n";
+  }
 
   return 0;
 }
