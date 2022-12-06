@@ -5,9 +5,9 @@ INCLUDE = -I/opt/boost-1.80.0 -I/opt/boost-1.80.0/include
 LIB = -L/opt/boost-1.80.0/lib
 BOOST = -lboost_thread
 all: kvclient kvserver
-kvclient: kvclient.cc
+kvclient: kvclient.cc message.hpp
 	g++ -std=c++20 -pthread $(INCLUDE) $(LIB) -okvclient kvclient.cc $(BOOST)
-kvserver: kvserver.cc
+kvserver: kvserver.cc message.hpp
 	g++ -std=c++20 -pthread $(INCLUDE) $(LIB) -okvserver kvserver.cc $(BOOST)
 clean:
 	rm kvclient
