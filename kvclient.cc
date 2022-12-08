@@ -158,21 +158,43 @@ int main(int argc, char* argv[]) {
       gmsg.second_length(strlen(line));
       memcpy(gmsg.second(), line, gmsg.second_length());
       gmsg.encode_header(PUT);
-      std::cout << "first" << gmsg.first() << std::endl;
 
       // Parse first from generic message
       char first[gmsg.first_length() + 1];
       memcpy(first, gmsg.first(), gmsg.first_length());
       first[gmsg.first_length()] = '\0';
-      std::cout << "first: " << first << std::endl;
 
-      std::cout << "msg.length(): " << msg.length() << std::endl;
-      std::cout << "gmsg.length(): " << gmsg.length() << std::endl;
-      std::cout << "msg.body(): " << msg.body() << std::endl;
-      std::cout << "gmsg.first(): " << gmsg.first() << std::endl;
-      std::cout << "gmgs.second(): " << gmsg.second() << std::endl;
-      std::cout << "msg.data(): " << msg.data() << std::endl;
-      std::cout << "gmsg.data: " << gmsg.data() << std::endl;
+      // std::cout << "msg.length(): " << msg.length() << std::endl;
+      // std::cout << "gmsg.length(): " << gmsg.length() << std::endl;
+      // std::cout << "msg.body(): " << msg.body() << std::endl;
+      // std::cout << "gmsg.first(): " << gmsg.first() << std::endl;
+      // std::cout << "gmgs.second(): " << gmsg.second() << std::endl;
+      // std::cout << "msg.data(): " << msg.data() << std::endl;
+      // std::cout << "gmsg.data: " << gmsg.data() << std::endl;
+
+      // Copy generic message to a new message and confirm decoding
+      generic_message gmsg2;
+      memcpy(gmsg2.data(), gmsg.data(), gmsg.length());
+      gmsg2.decode_header();
+      // std::cout << "gmsg.first(): " << gmsg.first() << std::endl;
+      // std::cout << "gmsg2.first(): " << gmsg2.first() << std::endl;
+      // std::cout << "gmsg.first_length(): " << gmsg.first_length() << std::endl;
+      // std::cout << "gmsg2.first_length(): " << gmsg2.first_length() << std::endl;
+      // std::cout << "gmsg.second(): " << gmsg.second() << std::endl;
+      // std::cout << "gmsg2.second(): " << gmsg2.second() << std::endl;
+      // std::cout << "gmsg.second_length(): " << gmsg.second_length() << std::endl;
+      // std::cout << "gmsg2.second_length(): " << gmsg2.second_length() << std::endl;
+
+      // // Copy message_text to data of a new generic message
+      // char message_text[] = "PUT\n3  \nkey\n  13\nabcdefghijklm\n";
+      // generic_message gmsg2;
+      // memcpy(gmsg2.data(), message_text, strlen(message_text));
+      // gmsg2.decode_header();
+
+      // std::cout << "gmsg2.first(): " << gmsg2.first() << std::endl;
+      // std::cout << "gmsg.first_length(): " << gmsg2.first_length() << std::endl;
+      // std::cout << "gmsg2.second(): " << gmsg2.second() << std::endl;
+      // std::cout << "gmsg2.second_length(): " << gmsg2.second_length() << std::endl;
     }
 
     c.close();

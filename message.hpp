@@ -76,11 +76,11 @@ public:
   }
 };
 
-enum message_type { GET, PUT, DEL, OK, ERROR };
+typedef enum { GET = 1, PUT = 2, DEL = 3, OK = 4, ERROR = 5 } message_type;
 
 class generic_message {
 public:
-  const static int header_length = 5;
+  const static int header_length = 4;
   const static int max_body_length = 1024;
   const static int offset_length = 4;
 
@@ -102,7 +102,8 @@ public:
   }
 
   size_t length() const {
-    return header_length + offset_length ;
+    return
+        header_length + 2 * offset_length + first_length_ + second_length_ + 2;
   }
 
   const char* body() const {
@@ -114,7 +115,7 @@ public:
   }
 
   size_t body_length() const {
-    return first_length_ + second_length_ + 2 * offset_length;
+    return first_length_ + second_length_ + 2 * offset_length + 2;
   }
 
   const char* first() const {
@@ -131,18 +132,20 @@ public:
 
   void first_length(size_t length) {
     first_length_ = length;
-    if (first_length_ + second_length_ > max_body_length) {
-      first_length_ = first_length_ > max_body_length ? max_body_length : first_length_;
-      second_length_ = max_body_length - first_length_;
+    if (first_length_ > max_body_length) {
+      first_length_ =
+          first_length_ > max_body_length ? max_body_length : first_length_;
     }
   }
 
   const char* second() const {
-    return data_ + header_length + offset_length + first_length_ + offset_length;
+    return
+        data_ + header_length + offset_length + first_length_ + offset_length + 2;
   }
 
   char* second() {
-    return data_ + header_length + offset_length + first_length_ + offset_length;
+    return
+        data_ + header_length + offset_length + first_length_ + offset_length + 2;
   }
 
   size_t second_length() const {
@@ -151,8 +154,7 @@ public:
 
   void second_length(size_t length) {
     second_length_ = length;
-    if (second_length_ > max_body_length) {
-      first_length_ = first_length_ > max_body_length ? max_body_length : first_length_;
+    if (first_length_ + second_length_ > max_body_length) {
       second_length_ = max_body_length - first_length_;
     }
   }
@@ -161,102 +163,257 @@ public:
     first_length_ = first_length;
     second_length_ = second_length;
     if (first_length_ + second_length_ > max_body_length) {
-      first_length_ = first_length_ > max_body_length ? max_body_length : first_length_;
+      first_length_ =
+          first_length_ > max_body_length ? max_body_length : first_length_;
       second_length_ = max_body_length - first_length_;
     }
   }
 
   bool decode_header() {
-    using namespace std; // For strncat and atoi.
+    // Decode the header
+    // Start with the message_type
     char header[header_length + 1] = "";
-    strncat(header, data_, header_length);
-
-    // Get the type of the message
-    if (header == "GET") {
-      type_ = message_type::GET;
-    } else if (header == "PUT\n") {
-      type_ = message_type::PUT;
-    } else if (header == "DEL\n") {
-      type_ = message_type::DEL;
-    } else if (header == "OK \n") {
-      type_ = message_type::OK;
-    } else if (header == "ERR\n") {
-      type_ = message_type::ERROR;
-    } else {
-      return false;
-    }
-
-    if (type_ == message_type::ERROR) {
+    memcpy(header, data_, header_length);
+    if (strcmp(header, "GET\n") == 0) {
+      type_ = GET;
+    } else if (strcmp(header, "PUT\n") == 0) {
+      type_ = PUT;
+    } else if (strcmp(header, "DEL\n") == 0) {
+      type_ = DEL;
+    } else if (strcmp(header, "OK \n") == 0) {
+      type_ = OK;
+    } else if (strcmp(header, "ERR\n") == 0) {
+      type_ = ERROR;
       return true;
-    }
-
-    // Get the first length
-    char first_length[offset_length + 1] = "";
-    strncat(first_length, data_ + header_length, offset_length);
-    first_length_ = atoi(first_length);
-    if (first_length_ > max_body_length) {
-      first_length_ = 0;
+    } else {
+      std::cout << "Error: unrecognized message type" << std::endl;
       return false;
     }
 
-    if (type_ == message_type::PUT) {
-      // Get the second length
+    // Decode the first length
+    char first_length[offset_length + 1] = "";
+    memcpy(first_length, data_ + header_length, offset_length);
+    first_length_ = atoi(first_length);
+
+    if (first_length_ > max_body_length) {
+      std::cout << "Error: first length is too long" << std::endl;
+      return false;
+    }
+
+    if (type_ == PUT) {
+      // Decode the second length
       char second_length[offset_length + 1] = "";
-      strncat(second_length, data_ + header_length + offset_length, offset_length);
+      memcpy(
+          second_length,
+          data_ + header_length + first_length_ + offset_length + 1,
+          offset_length);
       second_length_ = atoi(second_length);
+
       if (second_length_ > max_body_length) {
-        second_length_ = 0;
+        std::cout << "Error: second length is too long" << std::endl;
         return false;
       }
     }
 
     return true;
-    // body_length_ = atoi(header);
-    // if (body_length_ > max_body_length) {
-    //   body_length_ = 0;
+
+    // using namespace std; // For strncat and atoi.
+    // // Decode an encoded header
+    // char header[header_length + 1] = "";
+    // memcpy(header, data_, header_length);
+    // if (strcmp(header, "GET\n") == 0) {
+    //   type_ = GET;
+    // } else if (strcmp(header, "PUT\n") == 0) {
+    //   type_ = PUT;
+    // } else if (strcmp(header, "DEL\n") == 0) {
+    //   type_ = DEL;
+    // } else if (strcmp(header, "OK \n") == 0) {
+    //   type_ = OK;
+    // } else if (strcmp(header, "ERR\n") == 0) {
+    //   type_ = ERROR;
+    //   return true;
+    // } else {
+    //   cout << "Error: Unknown message type" << endl;
     //   return false;
     // }
+
+    // cout << "Header: " << header << endl;
+    // cout << "Data: " << data_ << endl;
+
+    // // Decode the first length
+    // char first_length[offset_length + 1] = "";
+    // memcpy(first_length, data_ + header_length, offset_length);
+    // first_length_ = atoi(first_length);
+    // cout << "First length: " << first_length << endl;
+    // cout << "First length: " << first_length_ << endl;
+
+    // // Decode the second length
+    // if (type_ == PUT) {
+    //   char second_length[offset_length + 1] = "";
+    //   memcpy(second_length, data_ + header_length + offset_length + first_length_,
+    //          offset_length);
+    //   second_length_ = atoi(second_length);
+    //   cout << "Second length: " << second_length << endl;
+    //   cout << "Second length: " << second_length_ << endl;
+    // }
     // return true;
+
+
+    // // using namespace std; // For strncat and atoi.
+    // // char header[header_length + 1] = "";
+    // // memcpy(header, data_, header_length);
+    // // // strncat(header, data_, header_length);
+
+    // // // Compare string to possible types
+    // // if (strcmp(header, "GET\n") == 0) {
+    // //   type_ = GET;
+    // // } else if (strcmp(header, "PUT\n") == 0) {
+    // //   type_ = PUT;
+    // // } else if (strcmp(header, "DEL\n") == 0) {
+    // //   type_ = DEL;
+    // // } else if (strcmp(header, "OK \n") == 0) {
+    // //   type_ = OK;
+    // // } else if (strcmp(header, "ERR\n") == 0) {
+    // //   type_ = ERROR;
+    // // } else {
+    // //   std::cout << "Unknown message type: " << header << std::endl;
+    // //   return false;
+    // // }
+
+    // // if (type_ == ERROR) {
+    // //   return true;
+    // // }
+
+    // // // Get the first length
+    // // char first_length[offset_length + 1] = "";
+    // // memcpy(first_length, data_ + header_length, offset_length);
+    // // // strncat(first_length, data_ + header_length, offset_length);
+    // // first_length_ = atoi(first_length);
+    // // if (first_length_ > max_body_length) {
+    // //   first_length_ = 0;
+    // //   return false;
+    // // }
+
+    // // if (type_ == PUT) {
+    // //   // Get the second length
+    // //   char second_length[offset_length + 1] = "";
+    // //   // strncat(
+    // //   //     second_length, data_ + header_length + offset_length, offset_length);
+    // //   memcpy(second_length, data_ + header_length + offset_length + first_length_ + 1, offset_length);
+    // //   second_length_ = atoi(second_length);
+    // //   if (second_length_ > max_body_length) {
+    // //     second_length_ = 0;
+    // //     return false;
+    // //   }
+    // // }
+
+    // // return true;
   }
 
   void encode_header(message_type type) {
-    // Set the header bytes to type of message
-    char header[header_length + 1] = "";
-    if (type == message_type::GET) {
-      sprintf(header, "GET\n");
-    } else if (type == message_type::PUT) {
-      sprintf(header, "PUT\n");
-    } else if (type == message_type::DEL) {
-      sprintf(header, "DEL\n");
-    } else if (type == message_type::OK) {
-      sprintf(header, "OK \n");
-    } else if (type == message_type::ERROR) {
-      sprintf(header, "ERR\n");
+    // Encode the header
+    // Start with type and newline
+    type_ = type;
+    switch (type) {
+      case ERROR:
+        memcpy(data_, "ERR\n", header_length);
+        return;
+      case OK:
+        memcpy(data_, "OK \n", header_length);
+        break;
+      case GET:
+        memcpy(data_, "GET\n", header_length);
+        break;
+      case PUT:
+        memcpy(data_, "PUT\n", header_length);
+        break;
+      case DEL:
+        memcpy(data_, "DEL\n", header_length);
+        break;
+      default:
+        std::cout << "Error: Unknown message type" << std::endl;
+        return;
     }
-    memcpy(data_, header, header_length);
+    // if (type == ERROR) {
+    //   memcpy(data_, "ERR\n", header_length);
+    //   return;
+    // } else if (type == OK) {
+    //   memcpy(data_, "OK \n", header_length);
+    // } else if (type == GET) {
+    //   memcpy(data_, "GET\n", header_length);
+    // } else if (type == PUT) {
+    //   memcpy(data_, "PUT\n", header_length);
+    // } else if (type == DEL) {
+    //   memcpy(data_, "DEL\n", header_length);
+    // } else {
+    //   std::cout << "Error: Unknown message type" << std::endl;
+    // }
 
-    if (type == message_type::ERROR) {
-      return;
+    // Encode the first length and newline
+    char len[offset_length + 1] = "";
+    sprintf(len, "%3d\n", first_length_);
+    // std::cout << "Len: " << len << std::endl;
+    memcpy(data_ + header_length, len, offset_length);
+    // std::cout << "First length: " << first_length_ << std::endl;
+
+    // Encode the second length and newline
+    if (type_ == PUT) {
+      // char second_length[offset_length + 1] = "";
+      // std::cout << "4First length: " << len << std::endl;
+      // std::cout << "Len: " << len << std::endl;
+      sprintf(len, "%3d\n", second_length_);
+      // std::cout << "Len: " << len << std::endl;
+      // std::cout << "5First length: " << first_length << std::endl;
+      memcpy(data_ + header_length + offset_length + first_length_ + 1, len, offset_length);
+      // std::cout << "6First length: " << first_length << std::endl;
+      // std::cout << "Second length: " << second_length_ << std::endl;
     }
 
-    // Set the first length
-    char first_length[offset_length + 1] = "";
-    sprintf(first_length, "%4d", static_cast<int>(first_length_));
-    memcpy(data_ + header_length, first_length, offset_length);
+    // if (type == ERROR) {
+    //   memcpy(data_, "ERR\n", header_length);
+    //   return;
+    // } else if (type == OK) {
+    //   memcpy(data_, "OK \n", header_length);
+    // } else if (type == GET) {
+    //   memcpy(data_, "GET\n", header_length);
+    // } else if (type == PUT) {
+    //   memcpy(data_, "PUT\n", header_length);
+    // } else if (type == DEL) {
+    //   memcpy(data_, "DEL\n", header_length);
+    // }
+    // // // Set the header bytes to type of message
+    // // char header[header_length + 1] = "";
+    // // if (type == GET) {
+    // //   sprintf(header, "GET\n");
+    // // } else if (type == PUT) {
+    // //   sprintf(header, "PUT\n");
+    // // } else if (type == DEL) {
+    // //   sprintf(header, "DEL\n");
+    // // } else if (type == OK) {
+    // //   sprintf(header, "OK \n");
+    // // } else if (type == ERROR) {
+    // //   sprintf(header, "ERR\n");
+    // // }
+    // // memcpy(data_, header, header_length);
 
-    if (type == message_type::PUT) {
-      // Set the second length
-      char second_length[offset_length + 1] = "";
-      sprintf(second_length, "%4d", static_cast<int>(second_length_));
-      memcpy(data_ + header_length + offset_length + first_length_, second_length, offset_length);
-    }
+    // // Set the first length
+    // char first_length[offset_length + 1] = "";
+    // sprintf(first_length, "%4d", static_cast<int>(first_length_));
+    // memcpy(data_ + header_length, first_length, offset_length);
+    // memset(data_ + header_length + offset_length, '\n', sizeof(char));
 
-    return;
+    // if (type == PUT) {
+    //   // Set the second length
+    //   char second_length[offset_length + 1] = "";
+    //   sprintf(second_length, "%4d", static_cast<int>(second_length_));
+    //   memcpy(
+    //       data_ + header_length + offset_length + first_length_,
+    //       second_length,
+    //       offset_length);
+    //   memset(data_ + header_length + offset_length + first_length_ + offset_length, '\n', sizeof(char));
+    // }
 
-    // using namespace std; // For sprintf and memcpy.
-    // char header[header_length + 1] = "";
-    // sprintf(header, "%4d", static_cast<int>(body_length_));
-    // memcpy(data_, header, header_length);
+    // return;
   }
 };
 
