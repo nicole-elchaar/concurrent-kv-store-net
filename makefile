@@ -5,7 +5,7 @@ INCLUDE = -I/opt/boost-1.80.0 -I/opt/boost-1.80.0/include
 LIB = -L/opt/boost-1.80.0/lib
 BOOST = -lboost_thread
 all: test
-test: test.cc message.cc kvstore.cc kvserver.cc kvclient.cc
+test: test.cc message.hpp kvstore.hpp kvserver.cc kvclient.cc
 	g++ -std=c++20 -pthread $(INCLUDE) $(LIB) -otest test.cc $(BOOST)
 clean:
 	rm test

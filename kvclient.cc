@@ -8,7 +8,7 @@
 #ifndef KVCLIENT_H
 #define KVCLIENT_H
 
-#include "message.cc"
+#include "message.hpp"
 
 #include <boost/asio.hpp>
 

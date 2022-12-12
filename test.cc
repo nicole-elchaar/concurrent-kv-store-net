@@ -9,7 +9,7 @@
 #ifndef TEST_H
 #define TEST_H
 
-#include "message.cc"
+#include "message.hpp"
 #include "kvserver.cc"
 #include "kvclient.cc"
 

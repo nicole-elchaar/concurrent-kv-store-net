@@ -10,8 +10,8 @@
 #ifndef KVSERVER_H
 #define KVSERVER_H
 
-#include "kvstore.cc"
-#include "message.cc"
+#include "kvstore.hpp"
+#include "message.hpp"
 #include "test.cc"
 
 #include <boost/asio.hpp>
