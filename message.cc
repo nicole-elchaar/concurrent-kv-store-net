@@ -1,13 +1,14 @@
-// Create message class to build string requests (GET, PUT, DEL) for the client
-// and responses (OK, ERR) for the server.  The messages can be encoded and
-// decoded on the client and server side.
+/* 
+ * Nicole ElChaar, CSE 411, Fall 2022
+ *
+ * This file contains the implementation of the message class, which is used
+ * to encode and decode messages between the client and server.
+ */
 
 #ifndef MESSAGE_H
 #define MESSAGE_H
 
-#include <iostream>
 #include <sstream>
-#include <string>
 #include <vector>
 
 enum message_type {GET = 3, PUT = 4, DEL = 5, OK = 0, ERROR = 1, UNSET = -1};
@@ -36,12 +37,22 @@ public:
 };
 
 message::message(message_type type, std::string first, std::string second) {
+  // Ensure that first and second are not empty
+  if (first == "" || second == "") {
+    this->type = UNSET;
+    return;
+  }
   this->type = type;
   this->first = first;
   this->second = second;
 }
 
 message::message(message_type type, std::string first) {
+  // Ensure that first is not empty
+  if (first == "") {
+    this->type = UNSET;
+    return;
+  }
   this->type = type;
   this->first = first;
 }
@@ -90,6 +101,9 @@ bool message::decode(std::string& encoded_message) {
   
   // Check that at least one additional token is present
   if (tokens.size() < 2) {
+    this->type = UNSET;
+    this->first = "";
+    this->second = "";
     return false;
   }
 
@@ -98,6 +112,9 @@ bool message::decode(std::string& encoded_message) {
     this->first = tokens[1];
   } else if (tokens[0] == "PUT") {
     if (tokens.size() < 3) {
+      this->type = UNSET;
+      this->first = "";
+      this->second = "";
       return false;
     }
     this->type = PUT;
@@ -106,7 +123,11 @@ bool message::decode(std::string& encoded_message) {
   } else if (tokens[0] == "DEL") {
     this->type = DEL;
     this->first = tokens[1];
-
+  } else {
+    this->type = UNSET;
+    this->first = "";
+    this->second = "";
+    return false;
   }
 
   // Replace carriage returns in values with newlines
