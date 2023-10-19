@@ -11,12 +11,15 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
-    - name: Install boost
+    - name: install boost
       id: install-boost
       uses: MarkusJx/install-boost@v2.4.4
       with:
           boost_version: 1.80.0
           platform_version: 22.04
+    - name: install boost-thread
+      id: install-boost-thread
+      run: sudo apt install libboost-thread-dev -y
     - name: build
       id: build
       run: make clean; make
