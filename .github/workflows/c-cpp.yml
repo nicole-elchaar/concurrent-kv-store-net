@@ -41,7 +41,11 @@ jobs:
         BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
     - name: test
       id: test
-      run: GITHUB_OUTPUT = "$(./test localhost 1895)"
+      run: |
+        $(./test localhost 1895) > test_results.txt
+          (cat text_results << "EOF") >> $GITHUB_OUTPUT
+          (cat text_results << "EOF") >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
 
   output:
     runs-on: ubuntu-22.04
