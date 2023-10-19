@@ -10,7 +10,6 @@ jobs:
   configure:
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v4
     - name: install boost
       id: install-boost
       uses: MarkusJx/install-boost@v2.4.4
@@ -27,6 +26,7 @@ jobs:
     outputs:
       test-results: ${{ steps.test.outputs.test }}
     steps:
+    - uses: actions/checkout@v4
     - name: build
       id: build
       run: make clean; make
