@@ -405,9 +405,12 @@ private:
           num_del++;
           std::cout << "Num del incremented" << std::endl;
 
+          std::cout << "Accessing it->first" << std::endl;
           std::string key = it->first;
+          std::cout << "Accessing it->second" << std::endl;
           std::string value = it->second;
           std::string client_value = "";
+          std::cout << "Calling client del" << std::endl;
           NASSERT(
               client.del(key),
               "TEST STRESS DEL: Client del existing key failed");
