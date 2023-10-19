@@ -16,7 +16,6 @@
 #include <cassert>
 #include <cstdlib>
 #include <fstream>
-#include <iostream>
 #include <random>
 #include <vector>
 
@@ -390,14 +389,21 @@ private:
     auto add_del_requests = [&](kvclient& client) {
       for (int i = 0; i < num_iterations; i++) {
         // Randomly select a key from the database or generate a random key
+        std::cout << "Iteration " << i << std::endl;
         if (rand() % 2 == 0) {
           // Get a random key already in the database and verify OK and value
+          std::cout << "Deleting existing key" << std::endl;
           del_lock.lock();
+          std::cout << "Lock acquired" << std::endl;
           auto it = next(begin(store), rand() % store.size());
+          std::cout << "Key found" << std::endl;
           // Remove the key from the database
           store.erase(it);
+          std::cout << "Key erased" << std::endl;
           del_lock.unlock();
+          std::cout << "Lock released" << std::endl;
           num_del++;
+          std::cout << "Num del incremented" << std::endl;
 
           std::string key = it->first;
           std::string value = it->second;
@@ -407,9 +413,11 @@ private:
               "TEST STRESS DEL: Client del existing key failed");
         } else {
           // Generate a random key that is not in the database and verify ERROR
+          std::cout << "Deleting missing key" << std::endl;
           std::string key = "";
           do {
             key = "";
+            std::cout << "Generating key" << std::endl;
             for (int j = 0; j < rand() % 10 + 1; j++) {
               key += rand() % 26 + 'a';
             }
@@ -417,9 +425,11 @@ private:
           std::string value = "";
 
           // Verify that the key is not in the server's kvstore
+          std::cout << "Verifying key not in server" << std::endl;
           NASSERT(
               !client.del(key),
               "TEST STRESS DEL: Client del missing key failed");
+          std::cout << "Verifying key not in local store" << std::endl;
           NASSERT(
               strcmp(value.c_str(), "") == 0,
               "TEST STRESS DEL: Client value is not empty");
@@ -429,16 +439,19 @@ private:
 
     // Create a list of threads to run the lambda on each client
     std::vector<std::thread> threads;
+    std::cout << "Creating threads" << std::endl;
     for (size_t i = 0; i < clients.size(); i++) {
       threads.push_back(std::thread(add_del_requests, std::ref(clients[i])));
     }
 
     // Join all the threads
+    std::cout << "Joining threads" << std::endl;
     for (size_t i = 0; i < threads.size(); i++) {
       threads[i].join();
     }
 
     // Check the number of keys deleted compared to the size of the database
+    std::cout << "Checking number of keys deleted" << std::endl;
     NASSERT(
         server.store.size() == starting_size - num_del,
         "TEST STRESS DEL: Number of keys deleted does not match database size");
