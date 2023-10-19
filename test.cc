@@ -396,6 +396,9 @@ private:
           del_lock.lock();
           std::cout << "Lock acquired" << std::endl;
           auto it = next(begin(store), rand() % store.size());
+          while (it == store.end()) {
+            it = next(begin(store), rand() % store.size());
+          }
           std::cout << "Key found" << std::endl;
           // Remove the key from the database
           store.erase(it);
