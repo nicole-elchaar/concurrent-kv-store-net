@@ -41,7 +41,7 @@ jobs:
         BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
     - name: test
       id: test
-      run: ./test localhost 1895 >> "$GITHUB_OUTPUT"
+      run: GITHUB_OUTPUT = "$(./test localhost 1895)"
 
   output:
     runs-on: ubuntu-22.04
