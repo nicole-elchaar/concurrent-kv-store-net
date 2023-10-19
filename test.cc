@@ -393,13 +393,14 @@ private:
           // Get a random key already in the database and verify OK and value
           del_lock.lock();
           auto it = next(begin(store), rand() % store.size());
+          const std::string key = it->first;
+          const std::string value = it->second;
+
           // Remove the key from the database
           store.erase(it);
           del_lock.unlock();
           num_del++;
 
-          std::string key = it->first;
-          std::string value = it->second;
           std::string client_value = "";
           NASSERT(
               client.del(key),
