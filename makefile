@@ -8,4 +8,4 @@ all: test
 test: test.cc message.hpp kvstore.hpp kvserver.cc kvclient.cc
 	g++ -std=c++20 -pthread $(INCLUDE) $(LIB) -otest test.cc $(BOOST)
 clean:
-	rm test
+	rm -f test
