@@ -20,13 +20,6 @@ jobs:
     - name: install boost-thread
       id: install-boost-thread
       run: sudo apt install libboost-thread-dev -y
-    - name: build
-      id: build
-      run: make clean; make
-      env: 
-        CC: gcc-11
-        CXX: g++-11
-        BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
   
   test:
     runs-on: ubuntu-22.04
@@ -34,6 +27,13 @@ jobs:
     outputs:
       test-results: ${{ steps.test.outputs.test }}
     steps:
+    - name: build
+      id: build
+      run: make clean; make
+      env: 
+        CC: gcc-11
+        CXX: g++-11
+        BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
     - name: test
       id: test
       run: ./test localhost 1895 >> "$GITHUB_OUTPUT"
