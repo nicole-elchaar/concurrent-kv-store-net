@@ -7,27 +7,32 @@ on:
     # branches: [ "main" ] # TODO: temporarily allow on all branch pushes to validate
 
 jobs:
-  configure:
+  test:
+  # configure:
     runs-on: ubuntu-22.04
+    outputs:
+      test-results: ${{ steps.test.outputs.test }}
     steps:
-    - name: install boost
+    - name: Install boost
       id: install-boost
       uses: MarkusJx/install-boost@v2.4.4
       with:
           boost_version: 1.80.0
           platform_version: 22.04
-    - name: install boost-thread
+    - name: Install boost-thread
       id: install-boost-thread
       run: sudo apt install libboost-thread-dev -y
   
-  test:
-    runs-on: ubuntu-22.04
-    needs: configure
-    outputs:
-      test-results: ${{ steps.test.outputs.test }}
-    steps:
-    - uses: actions/checkout@v4
-    - name: build
+  # test:
+  #   runs-on: ubuntu-22.04
+  #   needs: configure
+  #   outputs:
+  #     test-results: ${{ steps.test.outputs.test }}
+  #   steps:
+    - name: Checkout
+      id: checkout
+      uses: actions/checkout@v4
+    - name: Build
       id: build
       run: make clean; make
       env: 
