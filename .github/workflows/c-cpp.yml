@@ -42,15 +42,15 @@ jobs:
     - name: test
       id: test
       run: |
-        $(./test localhost 1895) > test_results.txt
-          (cat text_results << "EOF") >> $GITHUB_OUTPUT
-          (cat text_results << "EOF") >> $GITHUB_OUTPUT
-          echo "EOF" >> $GITHUB_OUTPUT
+        ./test localhost 1895) # > test_results.txt
+  #         (cat text_results << "EOF") >> $GITHUB_OUTPUT
+  #         (cat text_results << "EOF") >> $GITHUB_OUTPUT
+  #         echo "EOF" >> $GITHUB_OUTPUT
 
-  output:
-    runs-on: ubuntu-22.04
-    needs: test
-    steps:
-      - env:
-          result: ${{ needs.test.outputs.test-results }}
-        run: echo "$result"
+  # output:
+  #   runs-on: ubuntu-22.04
+  #   needs: test
+  #   steps:
+  #     - env:
+  #         result: ${{ needs.test.outputs.test-results }}
+  #       run: echo "$result"
