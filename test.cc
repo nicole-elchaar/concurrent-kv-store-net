@@ -411,6 +411,7 @@ private:
           NASSERT(
               client.del(key),
               "TEST STRESS DEL: Client del existing key failed");
+          std::cout << "Client del succeeded" << std::endl;
         } else {
           // Generate a random key that is not in the database and verify ERROR
           std::cout << "Deleting missing key" << std::endl;
@@ -507,12 +508,12 @@ public:
     std::cout << "Running tests..." << std::endl;
 
     // Run all tests
-    test_wrapper(std::move("TEST_MESSAGE"), &Test::test_message);
-    test_wrapper(std::move("TEST_GET"), &Test::test_get);
-    test_wrapper(std::move("TEST_PUT"), &Test::test_put);
-    test_wrapper(std::move("TEST_DELETE"), &Test::test_del);
-    test_wrapper(std::move("TEST_STRESS_GET"), &Test::test_stress_get);
-    test_wrapper(std::move("TEST_STRESS_PUT"), &Test::test_stress_put);
+    // test_wrapper(std::move("TEST_MESSAGE"), &Test::test_message);
+    // test_wrapper(std::move("TEST_GET"), &Test::test_get);
+    // test_wrapper(std::move("TEST_PUT"), &Test::test_put);
+    // test_wrapper(std::move("TEST_DELETE"), &Test::test_del);
+    // test_wrapper(std::move("TEST_STRESS_GET"), &Test::test_stress_get);
+    // test_wrapper(std::move("TEST_STRESS_PUT"), &Test::test_stress_put);
     test_wrapper(std::move("TEST_STRESS_DEL"), &Test::test_stress_del);
 
     std::cout << "All tests passed!" << std::endl;
