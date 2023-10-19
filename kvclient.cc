@@ -98,17 +98,25 @@ public:
   }
 
   bool del(const std::string& key) {
+    std::cout << "Deleting " << key << std::endl;
     message msg(DEL, key);
+    std::cout << "Message created" << std::endl;
     if (msg.get_type() == UNSET || msg.get_type() == ERROR) {
+      std::cout << "Message type is unset or error" << std::endl;
       return false;
     }
 
+    std::cout << "Sending request" << std::endl;
     send_request(msg);
+    std::cout << "Request sent" << std::endl;
     message response = read_response_msg();
+    std::cout << "Response received" << std::endl;
 
     if (response.get_type() == OK) {
+      std::cout << "Key found" << std::endl;
       return true;
     }
+    std::cout << "Key not found" << std::endl;
     return false;
   }
 
