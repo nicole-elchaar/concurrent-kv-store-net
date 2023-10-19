@@ -1,0 +1,30 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-22.04
+    outputs:
+      test-results: ${{ steps.test.outputs.test }}
+    steps:
+    - uses: actions/checkout@v4
+    - id: build
+      run: make clean; make
+      env: 
+        CC: gcc-11
+        CXX: g++-11
+    - id: test
+      run: ./test localhost 1895 >> "$GITHUB_OUTPUT"
+
+  output:
+    runs-on: ubuntu-22.04
+    needs: test
+    steps:
+      - env:
+          result: ${{ needs.test.outputs.test-results }}
+        run: echo "$result"
