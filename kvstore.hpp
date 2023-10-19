@@ -49,14 +49,22 @@ public:
   }
 
   bool del(const std::string& key) {
+    std::cout << "Deleting " << key << std::endl;
     int hash = hash_func(key) % num_locks;
+    std::cout << "Hash: " << hash << std::endl;
     locks[hash].lock();
+    std::cout << "Lock acquired" << std::endl;
     if (store.find(key) == store.end()) {
+      std::cout << "Key not found" << std::endl;
       locks[hash].unlock();
+      std::cout << "Lock released" << std::endl;
       return false;
     }
+    std::cout << "Key found" << std::endl;
     store.erase(key);
+    std::cout << "Key erased" << std::endl;
     locks[hash].unlock();
+    std::cout << "Lock released" << std::endl;
     return true;
   }
   
