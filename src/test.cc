@@ -50,8 +50,12 @@ private:
   void SetUp() {
     // Import all data from users.txt into the server's kvstore and verify size
     std::ifstream users_file("src/users.txt");
-    NASSERT(users_file.is_open(), "SetUp: Unable to open users.txt");
 
+    // If the users file is empty, does not exist, or is not open, end the test
+    NASSERT(users_file.good(), "SETUP: Unable to read users.txt");
+    NASSERT(users_file.peek() != std::ifstream::traits_type::eof(),
+            "SETUP: users.txt is empty");
+ 
     std::string line;
     while (getline(users_file, line)) {
       // Split the line into a key and value
@@ -66,9 +70,9 @@ private:
 
     // Verify that the server's kvstore and local store have the same size
     NASSERT(server.store.size() == store.size(),
-            "SetUp: Unexpected server size");
+            "SETUP: Unexpected server size");
     NASSERT(server.store.size() == 99728,
-            "SetUp: Unexpected length of users.txt");
+            "SETUP: Unexpected length of users.txt");
   }
 
   void TearDown() {
@@ -329,9 +333,9 @@ private:
           it = server.store.store.find(key);
           NASSERT(it != server.store.store.end(),
                   "TEST STRESS PUT: Server value does not exist");
-          NASSERT(
-              strcmp(client_value.c_str(), it->second.c_str()) == 0,
-              "TEST STRESS PUT: Client value does not match value in database");
+          NASSERT(strcmp(client_value.c_str(), it->second.c_str()) == 0,
+                  "TEST STRESS PUT: Inserted value does not match value in "
+                  "database");
         } else {
           // Generate a random key that is not in the database
           std::string key = "";
@@ -349,10 +353,10 @@ private:
 
           // Verify OK and new value
           NASSERT(client.put(key, value),
-                  "TEST STRESS PUT: Client put new key failed");
+                  "TEST STRESS PUT: Client received error on put");
           auto it = server.store.store.find(key);
           NASSERT(it != server.store.store.end(),
-                  "TEST STRESS PUT: Server put new key failed");
+                  "TEST STRESS PUT: Server failed to put new key");
         }
       }
     };
