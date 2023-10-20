@@ -13,23 +13,29 @@ Concurrent KV Store Net consists of two main components: a server and a client. 
 - Generic storage
   - Value types are arbitrary as they are stored in byte-array format 
 - Custom communication protocol
-  - Requests and responses are sent over the network using a custom protocol
-  - Variable-length keys and content are supported in a protocol similar to HTTP
+  - Requests and responses are sent over the network using a custom protocol similar to HTTP
+  - Variable-length keys and content are supported
 - Correctness
-  - Concurrent operations are tested with gtest (Google Test) for normal operation, stress testing, and edge cases
+  - Concurrent operations are stress tested with a custom test suite
 
 ## Usage 🧭
 
-To test the key-value store, run the following command:
+To build the project, run `make`.  Optionally set parameter `BUILD` to `release` to build with optimizations:
 
 ```shell
-./test <host> <port>
+make BUILD=release
+```
+
+To test the key-value store, run the following command after building, replacing `$(BUILD)` with either `debug` or `release`:
+
+```shell
+./bin/$(BUILD)/test <host> <port>
 ```
 
 For example:
 
 ```shell
-./test localhost 1895
+./bin/debug/test localhost 1895
 ```
 
 By default, the program will run with four clients and one server.  We initialize global hash map with 10,000 key-value pairs from the *users.txt* file.
@@ -38,7 +44,6 @@ By default, the program will run with four clients and one server.  We initializ
 
 - Make
 - boost
-- gtest
 
 ## Contributions 🤝
 

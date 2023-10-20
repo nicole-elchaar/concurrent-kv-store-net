@@ -1,10 +1,10 @@
-/* 
+/*
  * Nicole ElChaar, CSE 411, Fall 2022
  *
- * This file contains the kvserver class which handles GET, PUT, and DELETE
- * requests from any number of clients.  It returns OK and ERROR responses
- * depending on the success of the operation. The server uses the kvstore class
- * to store the key-value pairs.
+ * The kvserver class handles GET, PUT, and DELETE requests from any number of
+ * clients, using a thread pool to handle multiple requests at once. It returns
+ * OK and ERROR responses depending on the success of the operation. The
+ * kvserver uses the kvstore class to store the key-value pairs.
  */
 
 #ifndef KVSERVER_H
@@ -23,20 +23,22 @@ using boost::asio::ip::tcp;
 class kvserver {
 private:
   friend class Test;
-  boost::asio::io_service& io_service;
+  boost::asio::io_service &io_service;
   tcp::acceptor acceptor;
   kvstore store;
   std::vector<message> message_queue;
 
   void start_accept() {
-    tcp::socket* socket = new tcp::socket(io_service);
-    acceptor.async_accept(
-        *socket,
-        boost::bind(&kvserver::handle_accept,
-            this, socket, boost::asio::placeholders::error));
+    tcp::socket *socket = new tcp::socket(io_service);
+    acceptor.async_accept(*socket,
+                          boost::bind(&kvserver::handle_accept,
+                                      this,
+                                      socket,
+                                      boost::asio::placeholders::error));
   }
 
-  void handle_accept(tcp::socket* socket, const boost::system::error_code& error) {
+  void handle_accept(tcp::socket *socket,
+                     const boost::system::error_code &error) {
     if (!error) {
       boost::thread t(boost::bind(&kvserver::handle_session, this, socket));
     } else {
@@ -45,7 +47,7 @@ private:
     start_accept();
   }
 
-  void handle_session(tcp::socket* socket) {
+  void handle_session(tcp::socket *socket) {
     try {
       for (;;) {
         boost::asio::streambuf request;
@@ -90,16 +92,16 @@ private:
           boost::asio::write(*socket, boost::asio::buffer(resp.to_string()));
         }
       }
-    } catch (std::exception& e) {
+    } catch (std::exception &e) {
       // std::cout << "Client disconnected" << std::endl;
     }
     delete socket;
   }
 
 public:
-  kvserver(boost::asio::io_service& io_service, short port) :
-      io_service(io_service),
-      acceptor(io_service, tcp::endpoint(tcp::v4(), port)) {
+  kvserver(boost::asio::io_service &io_service, short port)
+      : io_service(io_service),
+        acceptor(io_service, tcp::endpoint(tcp::v4(), port)) {
     start_accept();
   }
 };
