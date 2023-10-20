@@ -1,8 +1,9 @@
-/* 
+/*
  * Nicole ElChaar, CSE 411, Fall 2022
  *
- * This file contains the kvclient class which sends requests to the server
- * and handles responses.
+ * The kvclient class sends requests to the server and handles responses. It
+ * uses the message class to encode and decode messages of type GET, PUT, and
+ * DEL.
  */
 
 #ifndef KVCLIENT_H
@@ -16,11 +17,10 @@ using boost::asio::ip::tcp;
 
 class kvclient {
 public:
-  kvclient(
-      boost::asio::io_service& io_service,
-      const std::string& host,
-      const std::string& port)
-        : io_service_(io_service), socket_(io_service) {
+  kvclient(boost::asio::io_service &io_service,
+           const std::string &host,
+           const std::string &port)
+      : io_service_(io_service), socket_(io_service) {
     tcp::resolver resolver(io_service);
     tcp::resolver::query query(host, port);
     tcp::resolver::iterator endpoint_iterator = resolver.resolve(query);
@@ -35,11 +35,11 @@ public:
     }
   }
 
-  void send_request(const std::string& request) {
+  void send_request(const std::string &request) {
     boost::asio::write(socket_, boost::asio::buffer(request));
   }
 
-  void send_request(message& msg) {
+  void send_request(message &msg) {
     std::string request;
     msg.encode(request);
     boost::asio::write(socket_, boost::asio::buffer(request));
@@ -66,7 +66,7 @@ public:
     return msg;
   }
 
-  bool get(const std::string& key, std::string& value) {
+  bool get(const std::string &key, std::string &value) {
     message msg(GET, key);
     if (msg.get_type() == UNSET || msg.get_type() == ERROR) {
       return false;
@@ -82,7 +82,7 @@ public:
     return false;
   }
 
-  bool put(const std::string& key, const std::string& value) {
+  bool put(const std::string &key, const std::string &value) {
     message msg(PUT, key, value);
     if (msg.get_type() == UNSET || msg.get_type() == ERROR) {
       return false;
@@ -97,7 +97,7 @@ public:
     return false;
   }
 
-  bool del(const std::string& key) {
+  bool del(const std::string &key) {
     message msg(DEL, key);
     if (msg.get_type() == UNSET || msg.get_type() == ERROR) {
       return false;
@@ -113,7 +113,7 @@ public:
   }
 
 private:
-  boost::asio::io_service& io_service_;
+  boost::asio::io_service &io_service_;
   tcp::socket socket_;
 };
 

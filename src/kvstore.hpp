@@ -1,8 +1,8 @@
-/* 
+/*
  * Nicole ElChaar, CSE 411, Fall 2022
  *
- * This file contains the implementation of a key-value store with a fixed
- * number of locks.
+ * The kvstore class implements a hash map with a fixed number of locks for
+ * concurrent operation.
  */
 
 #ifndef KVSTORE_H
@@ -28,7 +28,7 @@ public:
     hash_func = std::hash<std::string>{};
   }
 
-  bool get(const std::string& key, std::string& value) {
+  bool get(const std::string &key, std::string &value) {
     int hash = hash_func(key) % num_locks;
     locks[hash].lock();
     if (store.find(key) == store.end()) {
@@ -40,7 +40,7 @@ public:
     return true;
   }
 
-  bool put(const std::string& key, const std::string& value) {
+  bool put(const std::string &key, const std::string &value) {
     int hash = hash_func(key) % num_locks;
     locks[hash].lock();
     store[key] = value;
@@ -48,7 +48,7 @@ public:
     return true;
   }
 
-  bool del(const std::string& key) {
+  bool del(const std::string &key) {
     int hash = hash_func(key) % num_locks;
     locks[hash].lock();
     if (store.find(key) == store.end()) {
@@ -59,43 +59,43 @@ public:
     locks[hash].unlock();
     return true;
   }
-  
+
   bool clear() {
     for (int i = 0; i < num_locks; i++) {
-      locks[i].lock();    // Acquire all locks
+      locks[i].lock(); // Acquire all locks
     }
     store.clear();
     if (store.size() != 0) {
       for (int i = 0; i < num_locks; i++) {
-        locks[i].unlock();  // Release all locks
+        locks[i].unlock(); // Release all locks
       }
       return false;
     }
     for (int i = 0; i < num_locks; i++) {
-      locks[i].unlock();  // Release all locks
+      locks[i].unlock(); // Release all locks
     }
     return true;
   }
 
   void print() {
     for (int i = 0; i < num_locks; i++) {
-      locks[i].lock();    // Acquire all locks
+      locks[i].lock(); // Acquire all locks
     }
     for (auto it = store.begin(); it != store.end(); it++) {
       std::cout << it->first << " => " << it->second << std::endl;
     }
     for (int i = 0; i < num_locks; i++) {
-      locks[i].unlock();  // Release all locks
+      locks[i].unlock(); // Release all locks
     }
   }
 
   size_t size() {
     for (int i = 0; i < num_locks; i++) {
-      locks[i].lock();    // Acquire all locks
+      locks[i].lock(); // Acquire all locks
     }
     size_t size = store.size();
     for (int i = 0; i < num_locks; i++) {
-      locks[i].unlock();  // Release all locks
+      locks[i].unlock(); // Release all locks
     }
     return size;
   }

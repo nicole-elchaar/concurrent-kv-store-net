@@ -1,8 +1,8 @@
-/* 
+/*
  * Nicole ElChaar, CSE 411, Fall 2022
  *
- * This file contains the implementation of the message class, which is used
- * to encode and decode messages between the client and server.
+ * The message class encodes and decodes GET, PUT, and DEL messages, defining
+ * the interface between the client and server.
  */
 
 #ifndef MESSAGE_H
@@ -11,13 +11,14 @@
 #include <sstream>
 #include <vector>
 
-enum message_type {GET = 3, PUT = 4, DEL = 5, OK = 0, ERROR = 1, UNSET = -1};
+enum message_type { GET = 3, PUT = 4, DEL = 5, OK = 0, ERROR = 1, UNSET = -1 };
 
 class message {
 private:
   message_type type;
   std::string first;
   std::string second;
+
 public:
   message(message_type type, std::string first, std::string second);
   message(message_type type, std::string first);
@@ -25,8 +26,8 @@ public:
   message();
   message(std::string encoded_message);
   std::string to_string();
-  bool encode(std::string& encoded_message);
-  bool decode(std::string& encoded_message);
+  bool encode(std::string &encoded_message);
+  bool decode(std::string &encoded_message);
   message_type get_type();
   std::string get_key();
   std::string get_value();
@@ -57,17 +58,11 @@ message::message(message_type type, std::string first) {
   this->first = first;
 }
 
-message::message(message_type type) {
-  this->type = type;
-}
+message::message(message_type type) { this->type = type; }
 
-message::message() {
-  this->type = UNSET;
-}
+message::message() { this->type = UNSET; }
 
-message::message(std::string encoded_message) {
-  decode(encoded_message);
-}
+message::message(std::string encoded_message) { decode(encoded_message); }
 
 std::string message::to_string() {
   std::string message_string;
@@ -78,14 +73,14 @@ std::string message::to_string() {
   }
 }
 
-bool message::decode(std::string& encoded_message) {
+bool message::decode(std::string &encoded_message) {
   std::stringstream ss(encoded_message);
   std::string token;
   std::vector<std::string> tokens;
   while (std::getline(ss, token, ' ')) {
     tokens.push_back(token);
   }
-  
+
   if (tokens[0] == "ERR") {
     this->type = ERROR;
     return true;
@@ -98,7 +93,7 @@ bool message::decode(std::string& encoded_message) {
     }
     return true;
   }
-  
+
   // Check that at least one additional token is present
   if (tokens.size() < 2) {
     this->type = UNSET;
@@ -138,7 +133,7 @@ bool message::decode(std::string& encoded_message) {
   return true;
 }
 
-bool message::encode(std::string& encoded_message) {
+bool message::encode(std::string &encoded_message) {
   // Forbid newlines in keys, replace newlines in values with carriage returns
   if (this->first.find("\n") != std::string::npos) {
     return false;
@@ -177,17 +172,11 @@ bool message::encode(std::string& encoded_message) {
   return true;
 }
 
-message_type message::get_type() {
-  return this->type;
-}
+message_type message::get_type() { return this->type; }
 
-std::string message::get_key() {
-  return this->first;
-}
+std::string message::get_key() { return this->first; }
 
-std::string message::get_value() {
-  return this->second;
-}
+std::string message::get_value() { return this->second; }
 
 bool message::reset(message_type type, std::string first, std::string second) {
   this->type = type;
