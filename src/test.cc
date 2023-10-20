@@ -384,34 +384,26 @@ private:
     auto add_del_requests = [&](kvclient &client) {
       for (int i = 0; i < num_iterations; i++) {
         // Randomly select a key from the database or generate a random key
-        std::cout << "Iteration " << i << std::endl;
         if (rand() % 2 == 0) {
           // Get a random key already in the database and verify OK and value
-          std::cout << "Deleting existing key" << std::endl;
           del_lock.lock();
-          std::cout << "Lock acquired" << std::endl;
           auto it = next(begin(store), rand() % store.size());
           const std::string key = it->first;
           const std::string value = it->second;
 
           // Remove the key from the database
           store.erase(it);
-          std::cout << "Key erased" << std::endl;
           del_lock.unlock();
-          std::cout << "Lock released" << std::endl;
           num_del++;
-          std::cout << "Num del incremented" << std::endl;
 
           std::string client_value = "";
           NASSERT(client.del(key),
                   "TEST STRESS DEL: Client del existing key failed");
         } else {
           // Generate a random key that is not in the database and verify ERROR
-          std::cout << "Deleting missing key" << std::endl;
           std::string key = "";
           do {
             key = "";
-            std::cout << "Generating key" << std::endl;
             for (int j = 0; j < rand() % 10 + 1; j++) {
               key += rand() % 26 + 'a';
             }
@@ -429,19 +421,16 @@ private:
 
     // Create a list of threads to run the lambda on each client
     std::vector<std::thread> threads;
-    std::cout << "Creating threads" << std::endl;
     for (size_t i = 0; i < clients.size(); i++) {
       threads.push_back(std::thread(add_del_requests, std::ref(clients[i])));
     }
 
     // Join all the threads
-    std::cout << "Joining threads" << std::endl;
     for (size_t i = 0; i < threads.size(); i++) {
       threads[i].join();
     }
 
     // Check the number of keys deleted compared to the size of the database
-    std::cout << "Checking number of keys deleted" << std::endl;
     NASSERT(
         server.store.size() == starting_size - num_del,
         "TEST STRESS DEL: Number of keys deleted does not match database size");
@@ -456,13 +445,11 @@ private:
     TearDown();
 
     if (result) {
-      std::cout << "\033[1;32m[PASS]\033[0m"
-                << "\t" << name << std::endl;
+      std::cout << "\033[1;32m[PASS]\033[0m" << "\t" << name << std::endl;
       return true;
     }
 
-    std::cout << "\033[1;31m[FAIL]\033[0m"
-              << "\t" << name << std::endl;
+    std::cout << "\033[1;31m[FAIL]\033[0m" << "\t" << name << std::endl;
     return false;
   }
 
