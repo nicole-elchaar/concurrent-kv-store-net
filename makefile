@@ -32,6 +32,10 @@ BOOST = -lboost_thread
 # Define the all target
 all: $(TARGET)
 
+# Define the run target
+run: $(TARGET)
+	$(TARGET) localhost 1895
+
 # Define the clean target
 clean:
 	rm -rf $(BIN_DIR)
