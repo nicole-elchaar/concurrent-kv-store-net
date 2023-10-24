@@ -28,10 +28,9 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install libboost-all-dev -y
-        # Move Boost files to the custom directory
         sudo mv /usr/include/boost ${{ env.BOOST_ROOT }}
 
     - name: Build and Test
       run: |
-        # Update your build process to use the custom Boost directory
+        export BOOST_ROOT=${{ env.BOOST_ROOT }}
         make run BUILD=release
