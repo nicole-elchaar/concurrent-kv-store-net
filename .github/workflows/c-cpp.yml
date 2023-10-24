@@ -9,6 +9,9 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      BOOST_ROOT: ${{ github.workspace }}/boost
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -17,7 +20,7 @@ jobs:
       id: boost-cache
       uses: actions/cache@v3
       with:
-        path: /usr/include/boost
+        path: ${{ env.BOOST_ROOT }}
         key: boost-${{ runner.os }}-${{ hashFiles('**/c-cpp.yml') }}
 
     - name: Install Boost
@@ -25,7 +28,10 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install libboost-all-dev -y
+        # Move Boost files to the custom directory
+        sudo mv /usr/include/boost ${{ env.BOOST_ROOT }}
 
     - name: Build and Test
       run: |
+        # Update your build process to use the custom Boost directory
         make run BUILD=release
