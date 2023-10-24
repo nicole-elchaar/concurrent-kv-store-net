@@ -18,7 +18,7 @@ jobs:
       uses: actions/cache@v3
       with:
         path: /usr/include/boost
-        key: boost-${{ runner.os }}-${{ hashFiles('c-cpp.yml') }}
+        key: boost-${{ runner.os }}-${{ hashFiles('**/c-cpp.yml') }}
 
     - name: Install Boost
       if: steps.boost-cache.outputs.cache-hit != 'true'
@@ -28,9 +28,4 @@ jobs:
 
     - name: Build and Test
       run: |
-        if ! make run BUILD=release | tee /dev/tty | grep -q "FAIL"; then
-          echo "Tests passed!"
-        else
-          echo "Tests failed!"
-          exit 1
-        fi
+        make run BUILD=release
