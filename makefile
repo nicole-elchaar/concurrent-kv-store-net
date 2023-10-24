@@ -10,7 +10,7 @@ BUILD := debug
 CXX := g++
 CXXFLAGS := -std=c++20 -pthread -pedantic
 CXXFLAGS_debug := -Og -g -Wall -Wextra
-CXXFLAGS_release := -O3 -DNDEBUG -Wno-unused
+CXXFLAGS_release := -O3 -DNDEBUG -Wno-unused-parameter
 CXXFLAGS += -MMD -MP $(CXXFLAGS_$(BUILD))
 
 # Define the source files
