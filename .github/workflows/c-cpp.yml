@@ -4,55 +4,38 @@ on:
   push:
     # branches: [ "main" ] # TODO: temporarily allow on all branch pushes to validate
   pull_request:
-    # branches: [ "main" ] # TODO: temporarily allow on all branch pushes to validate
 
 jobs:
-  test:
-  # configure:
-    runs-on: ubuntu-22.04
-    outputs:
-      test-results: ${{ steps.test.outputs.test }}
+  build:
+    runs-on: ubuntu-latest
+
     steps:
-    - name: Install boost
-      id: install-boost
-      run: sudo apt install libboost-all-dev -y
-
-    #   uses: MarkusJx/install-boost@v2.4.4
-    #   with:
-    #       boost_version: 1.80.0
-    #       platform_version: 22.04
-    # - name: Install boost-thread
-    #   id: install-boost-thread
-    #   run: sudo apt install libboost-thread-dev -y
-  
-  # test:
-  #   runs-on: ubuntu-22.04
-  #   needs: configure
-  #   outputs:
-  #     test-results: ${{ steps.test.outputs.test }}
-  #   steps:
-    - name: Checkout
-      id: checkout
+    - name: Checkout code
       uses: actions/checkout@v4
-    - name: Build
-      id: build
-      run: make clean; make
-      env: 
-        CC: gcc-11
-        CXX: g++-11
-        BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
-    - name: test
-      id: test
-      run: |
-        make run # > test_results.txt
-  #         (cat text_results << "EOF") >> $GITHUB_OUTPUT
-  #         (cat text_results << "EOF") >> $GITHUB_OUTPUT
-  #         echo "EOF" >> $GITHUB_OUTPUT
 
-  # output:
-  #   runs-on: ubuntu-22.04
-  #   needs: test
-  #   steps:
-  #     - env:
-  #         result: ${{ needs.test.outputs.test-results }}
-  #       run: echo "$result"
+    - name: Set up Boost cache
+      id: boost-cache
+      uses: actions/cache@v2
+      with:
+        path: /usr/include/boost
+        key: boost-${{ runner.os }}-${{ hashFiles('c-cpp.yml') }}
+        restore-keys: |
+          boost-${{ runner.os }}-
+
+    - name: Install Boost
+      if: steps.boost-cache.outputs.cache-hit != 'true'
+      run: |
+        sudo apt-get update
+        sudo apt-get install libboost-all-dev -y
+
+    - name: Build
+      run: make clean; make BUILD=release
+
+    - name: Verify Tests
+      run: |
+        if ! make run | tee /dev/tty | grep -q "FAIL"; then
+          echo "Tests passed!"
+        else
+          echo "Tests failed!"
+          exit 1
+        fi
