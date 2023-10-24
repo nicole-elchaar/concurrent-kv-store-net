@@ -15,12 +15,10 @@ jobs:
 
     - name: Set up Boost cache
       id: boost-cache
-      uses: actions/cache@v2
+      uses: actions/cache@v3
       with:
         path: /usr/include/boost
         key: boost-${{ runner.os }}-${{ hashFiles('c-cpp.yml') }}
-        restore-keys: |
-          boost-${{ runner.os }}-
 
     - name: Install Boost
       if: steps.boost-cache.outputs.cache-hit != 'true'
@@ -28,12 +26,9 @@ jobs:
         sudo apt-get update
         sudo apt-get install libboost-all-dev -y
 
-    - name: Build
-      run: make clean; make BUILD=release
-
-    - name: Verify Tests
+    - name: Build and Test
       run: |
-        if ! make run | tee /dev/tty | grep -q "FAIL"; then
+        if ! make run BUILD=release | tee /dev/tty | grep -q "FAIL"; then
           echo "Tests passed!"
         else
           echo "Tests failed!"
