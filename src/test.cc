@@ -445,13 +445,11 @@ private:
     TearDown();
 
     if (result) {
-      std::cout << "\033[1;32m[PASS]\033[0m"
-                << "\t" << name << std::endl;
+      std::cout << "\033[1;32m[PASS]\033[0m" << "\t" << name << std::endl;
       return true;
     }
 
-    std::cout << "\033[1;31m[FAIL]\033[0m"
-              << "\t" << name << std::endl;
+    std::cout << "\033[1;31m[FAIL]\033[0m" << "\t" << name << std::endl;
     return false;
   }
 

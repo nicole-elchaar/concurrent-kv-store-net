@@ -10,7 +10,7 @@ BUILD := debug
 CXX := g++
 CXXFLAGS := -std=c++20 -pthread -pedantic
 CXXFLAGS_debug := -Og -g -Wall -Wextra
-CXXFLAGS_release := -O3 -DNDEBUG
+CXXFLAGS_release := -O3 -DNDEBUG -Wno-unused-parameter
 CXXFLAGS += -MMD -MP $(CXXFLAGS_$(BUILD))
 
 # Define the source files
@@ -31,6 +31,10 @@ BOOST = -lboost_thread
 
 # Define the all target
 all: $(TARGET)
+
+# Define the run target
+run: $(TARGET)
+	$(TARGET) localhost 1895
 
 # Define the clean target
 clean:

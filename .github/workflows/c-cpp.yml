@@ -1,0 +1,30 @@
+name: C/C++ CI
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Boost cache
+      id: boost-cache
+      uses: actions/cache@v3
+      with:
+        path: /usr/include/boost
+        key: boost-${{ runner.os }}-${{ hashFiles('**/c-cpp.yml') }}
+
+    - name: Install Boost
+      if: steps.boost-cache.outputs.cache-hit != 'true'
+      run: |
+        sudo apt-get update
+        sudo apt-get install libboost-all-dev -y
+
+    - name: Build and Test
+      run: |
+        make run BUILD=release
