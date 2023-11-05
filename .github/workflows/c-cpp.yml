@@ -1,7 +1,7 @@
 name: C/C++ CI
 on:
   push:
-    # branches: [ "main" ] # TODO: temporarily allow on all branch pushes to validate
+    branches: [ "main" ]
   pull_request:
 
 jobs:
